@@ -1,3 +1,5 @@
+const { gql } = require("apollo-server-express");
+
 const typeDefs = gql(`
     type User{
         id:ID!
@@ -21,7 +23,7 @@ const typeDefs = gql(`
         task(id:ID!):Task
     }
 
-    type mutation{
+    type Mutation{
         createTask(title:String!,description:String!):Task!
         toggleTask(id:ID!):Task!
         deleteTask(id:ID!):Boolean!

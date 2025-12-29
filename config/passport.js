@@ -23,13 +23,20 @@ passport.use(
           await user.save();
         }
 
-        const token = jwt.sign(
-          { id: user._id, email: user.email },
+        const accessToken = jwt.sign(
+          { id: user._id },
           process.env.JWT_SECRET,
-          { expiresIn: "24h" }
+          { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-
-        done(null, { user, token });
+        
+        const refreshToken = jwt.sign(
+          { id: user._id },
+          process.env.JWT_REFRESH_SECRET,
+          { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN }
+        );
+        
+        done(null, { user, accessToken, refreshToken });
+        
       } catch (error) {
         done(error);
       }

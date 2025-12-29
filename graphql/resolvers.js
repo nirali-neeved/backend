@@ -5,10 +5,12 @@ const auth = require("../middleware/auth");
 const resolvers = {
   Query: {
     me: async (parent, args, context) => {
+      if (!context.user) throw new Error("Not authenticated"); 
       return context.user;
     },
 
     myTask: async (parent, args, context) => {
+      if (!context.user) throw new Error("Not Authenticated");
       return await Task.find({ userId: context.user._id });
     },
 
@@ -19,6 +21,7 @@ const resolvers = {
 
   Mutation: {
     createTask: async (parent, { title, description }, context) => {
+      if (!context.user) throw new Error("You must be logged in");
       const task = new Task({
         title,
         description,
