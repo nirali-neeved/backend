@@ -1,16 +1,18 @@
-import { describe, it, beforeAll, afterAll, expect } from "vitest";
-import request from "supertest";
-import createApp from "../server.js";
-import mongoose from "mongoose";
-import User from "../models/User.js";
-import Task from "../models/task.js";
-import jwt from "jsonwebtoken";
+process.env.NODE_ENV = "test";
+const request = require("supertest");
+const createApp = require("../server");
+const mongoose = require("mongoose");
+const User = require("../models/User");
+const Task = require("../models/task");
+const jwt = require("jsonwebtoken");
 
 let app;
 let token;
 let userId;
 
 beforeAll(async () => {
+  await mongoose.disconnect();
+
   await mongoose.connect(process.env.MONGODB_URI_TEST);
 
   app = await createApp();
@@ -24,7 +26,7 @@ beforeAll(async () => {
   token = jwt.sign(
     { id: user._id, email: user.email },
     process.env.JWT_SECRET_TEST,
-    { expiresIn: "15m" }
+    { expiresIn: "7d" }
   );
 
   await Task.create({
@@ -32,16 +34,16 @@ beforeAll(async () => {
     description: "Test using Vitest",
     userId,
   });
-},20000);
+}, 20000);
 
 afterAll(async () => {
-    await User.deleteMany({});
-    await Task.deleteMany({});
-    await mongoose.disconnect();
+  await User.deleteMany({});
+  await Task.deleteMany({});
+  await mongoose.disconnect();
 });
 
 describe("REST API Tests", () => {
-  it("GET /api/tasks should return tasks for logged-in user", async () => {
+  it("GET /api/return logged-in user", async () => {
     const res = await request(app)
       .get("/api/tasks")
       .set("Authorization", `Bearer ${token}`)
@@ -51,11 +53,11 @@ describe("REST API Tests", () => {
     expect(res.body[0].title).toBe("Task 1");
   });
 
-  it("GET /api/tasks should return 401 without token", async () => {
+  it("GET/api/tasks should return 401", async () => {
     await request(app).get("/api/tasks").expect(401);
   });
 
-  it("POST /api/tasks should create a new task", async () => {
+  it("POST /api/return create a new task", async () => {
     const res = await request(app)
       .post("/api/tasks")
       .set("Authorization", `Bearer ${token}`)

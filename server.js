@@ -14,23 +14,30 @@ async function createApp() {
 
   app.use(cors());
 
-  // await connectDB();
+  if (process.env.NODE_ENV !== "test") {
+    await connectDB();
+  }
 
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: async ({ req }) => {
+    context: ({ req }) => {
       const authHeader = req.headers.authorization || "";
-      const token = authHeader.replace("Bearer ", "");
+      const token = authHeader.split(" ")[1];
 
-      if (!token) return {};
+      if (!token) return { user: null };
 
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_TEST);
-        const user = await User.findById(decoded.id);
-        return { user };
-      } catch {
-        return {};
+        const secret =
+          process.env.NODE_ENV === "test"
+            ? process.env.JWT_SECRET_TEST
+            : process.env.JWT_SECRET;
+
+        const decoded = jwt.verify(token, secret);
+        return { user: decoded };
+      } catch (err) {
+        console.log("JWT Verification Error:", err.message);
+        return { user: null };
       }
     },
   });
@@ -50,12 +57,18 @@ async function createApp() {
 
 module.exports = createApp;
 
-if (require.main === module) {
-  (async () => {
+const startServer = async () => {
+  try {
     const app = await createApp();
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-  })().catch((err) => console.error("Server failed to start:", err));
+  } catch (error) {
+    console.error("Server failed to start", error);
+    process.exit(1);
+  }
+};
+if (require.main === module) {
+  startServer();
 }

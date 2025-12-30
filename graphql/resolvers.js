@@ -6,16 +6,22 @@ const resolvers = {
   Query: {
     me: async (parent, args, context) => {
       if (!context.user) throw new Error("Not authenticated"); 
-      return context.user;
+      const user = await User.findById(context.user.id);
+
+      if (!user) {
+        throw new Error("User not found in database");
+      }
+
+      return user;
     },
 
     myTask: async (parent, args, context) => {
       if (!context.user) throw new Error("Not Authenticated");
-      return await Task.find({ userId: context.user._id });
+      return await Task.find({ userId: context.user.id });
     },
 
     task: async (parent, { id }, context) => {
-      return await Task.findOne({ _id: id, userId: context.user._id });
+      return await Task.findOne({ _id: id, userId: context.user.id });
     },
   },
 
@@ -26,7 +32,7 @@ const resolvers = {
         title,
         description,
         completed: false,
-        userId: context.user._id,
+        userId: context.user.id,
       });
       return await task.save();
     },
